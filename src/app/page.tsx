@@ -37,12 +37,25 @@ export default function Home() {
     }
   }
 
-  function handleDownload() {
+  const [copied, setCopied] = useState(false);
+
+  async function handleCopy() {
     if (!cardImageUrl) return;
-    const a = document.createElement("a");
-    a.href = cardImageUrl;
-    a.download = "xpayout-card.png";
-    a.click();
+    try {
+      const res = await fetch(cardImageUrl);
+      const blob = await res.blob();
+      await navigator.clipboard.write([
+        new ClipboardItem({ "image/png": blob }),
+      ]);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Fallback: download if clipboard API not supported
+      const a = document.createElement("a");
+      a.href = cardImageUrl;
+      a.download = "xpayout-card.png";
+      a.click();
+    }
   }
 
   return (
@@ -103,10 +116,10 @@ export default function Home() {
               />
             </div>
             <button
-              onClick={handleDownload}
+              onClick={handleCopy}
               className="px-6 py-3 rounded-xl bg-zinc-800 text-white font-medium text-sm hover:bg-zinc-700 transition-colors border border-zinc-700"
             >
-              Download Card
+              {copied ? "Copied!" : "Copy Card"}
             </button>
           </div>
         )}
