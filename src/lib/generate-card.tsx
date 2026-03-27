@@ -157,41 +157,47 @@ export async function generateCardImage(data: CardData): Promise<ImageResponse> 
           </svg>
         </div>
 
-        {/* "Estimated payout" — Figma: X:600 Y:249, Inter Extra Light 50px */}
+        {/* Centered text group — "Estimated payout" + dollar amount */}
         <div
           style={{
             position: "absolute",
-            top: "249px",
+            top: "0",
             left: "0",
             right: "0",
+            bottom: "0",
             display: "flex",
+            flexDirection: "column",
             justifyContent: "center",
-            fontSize: "50px",
-            color: "#999999",
-            fontWeight: 200,
-            letterSpacing: "1px",
+            alignItems: "center",
           }}
         >
-          Estimated payout
-        </div>
+          {/* "Estimated payout" — Inter Extra Light 50px */}
+          <div
+            style={{
+              display: "flex",
+              fontSize: "50px",
+              color: "#999999",
+              fontWeight: 200,
+              letterSpacing: "1px",
+              marginBottom: "8px",
+            }}
+          >
+            Estimated payout
+          </div>
 
-        {/* Payout amount — Figma: centered, Inter Medium 250px */}
-        <div
-          style={{
-            position: "absolute",
-            top: "282px",
-            left: "0",
-            right: "0",
-            display: "flex",
-            justifyContent: "center",
-            fontSize: `${payoutFontSize}px`,
-            color: "#ffffff",
-            fontWeight: 500,
-            letterSpacing: "-4px",
-            lineHeight: 1,
-          }}
-        >
-          {payoutFormatted}
+          {/* Payout amount — Inter Medium 250px */}
+          <div
+            style={{
+              display: "flex",
+              fontSize: `${payoutFontSize}px`,
+              color: "#ffffff",
+              fontWeight: 500,
+              letterSpacing: "-4px",
+              lineHeight: 1,
+            }}
+          >
+            {payoutFormatted}
+          </div>
         </div>
 
         {/* Avatar — Figma: X:101 Y:726, 108x108, white border 2px, radius 20 */}
