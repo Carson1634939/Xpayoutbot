@@ -18,17 +18,18 @@ function formatPayout(amount: number): string {
 
 /**
  * Dynamically scale the payout font so it fits the card width.
+ * Base size is 250px per Figma, scales down for longer amounts.
  */
 function getPayoutFontSize(formatted: string): number {
   const len = formatted.length;
-  if (len <= 8) return 200;
-  if (len <= 10) return 170;
-  if (len <= 12) return 145;
-  if (len <= 14) return 125;
-  return 105;
+  if (len <= 9) return 250;
+  if (len <= 11) return 210;
+  if (len <= 13) return 175;
+  if (len <= 15) return 150;
+  return 125;
 }
 
-// Base URL for loading assets — set via env var or fallback for local dev
+// Base URL for loading assets
 function getBaseUrl(): string {
   if (process.env.NEXT_PUBLIC_BASE_URL) return process.env.NEXT_PUBLIC_BASE_URL;
   if (process.env.VERCEL_PROJECT_PRODUCTION_URL)
@@ -39,12 +40,14 @@ function getBaseUrl(): string {
 
 /**
  * Generate the social card as a PNG Response.
- * Matches the Figma design exactly:
- *   - Background: card-bg.png from public/
- *   - "Estimated payout": Inter Extra Light, 50px
- *   - Dollar amount: Inter Regular, 200px
- *   - @username: Inter Extra Light, 50px
- *   - X logo top-right, avatar + handle bottom-left
+ *
+ * Figma specs (1600x900 canvas):
+ *   "Estimated payout": X:600, Y:249, Inter Extra Light 50px, #999
+ *   Payout amount: centered X+Y, Inter Medium 250px, #fff
+ *   Avatar: X:101, Y:726, 108x108, white border 2px, radius 20
+ *   @username: next to avatar, Inter Extra Light 50px, #fff
+ *   X logo: top-right
+ *   Background: card-bg.png
  */
 export async function generateCardImage(data: CardData): Promise<ImageResponse> {
   const { username, avatarUrl, payout } = data;
@@ -53,18 +56,18 @@ export async function generateCardImage(data: CardData): Promise<ImageResponse> 
   const firstLetter = username.charAt(0).toUpperCase();
   const baseUrl = getBaseUrl();
 
-  // Load Inter fonts: Extra Light (200 weight) and Regular (400 weight)
-  const [interExtraLightRes, interRegularRes] = await Promise.all([
+  // Load Inter fonts: Extra Light (200) and Medium (500)
+  const [interExtraLightRes, interMediumRes] = await Promise.all([
     fetch(
       "https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuDyfMZhrib2Bg-4.ttf"
     ),
     fetch(
-      "https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuLyfMZhrib2Bg-4.ttf"
+      "https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuI6fMZhrib2Bg-4.ttf"
     ),
   ]);
 
   const interExtraLight = await interExtraLightRes.arrayBuffer();
-  const interRegular = await interRegularRes.arrayBuffer();
+  const interMedium = await interMediumRes.arrayBuffer();
 
   // Check if avatar URL is reachable
   let avatarIsValid = false;
@@ -81,8 +84,8 @@ export async function generateCardImage(data: CardData): Promise<ImageResponse> 
     (
       <div
         style={{
-          width: "1200px",
-          height: "675px",
+          width: "1600px",
+          height: "900px",
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
@@ -95,14 +98,14 @@ export async function generateCardImage(data: CardData): Promise<ImageResponse> 
         {/* Background image from Figma */}
         <img
           src={bgImageUrl}
-          width="1200"
-          height="675"
+          width="1600"
+          height="900"
           style={{
             position: "absolute",
             top: 0,
             left: 0,
-            width: "1200px",
-            height: "675px",
+            width: "1600px",
+            height: "900px",
             objectFit: "cover",
           }}
         />
@@ -111,88 +114,105 @@ export async function generateCardImage(data: CardData): Promise<ImageResponse> 
         <div
           style={{
             position: "absolute",
-            top: "44px",
-            right: "56px",
+            top: "48px",
+            right: "64px",
             display: "flex",
           }}
         >
-          <svg width="56" height="56" viewBox="0 0 24 24" fill="white">
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="white">
             <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
           </svg>
         </div>
 
-        {/* "Estimated payout" — Inter Extra Light, 50px */}
+        {/* "Estimated payout" — Figma: X:600 Y:249, Inter Extra Light 50px */}
         <div
           style={{
+            position: "absolute",
+            top: "249px",
+            left: "0",
+            right: "0",
             display: "flex",
+            justifyContent: "center",
             fontSize: "50px",
             color: "#999999",
-            marginBottom: "20px",
             fontWeight: 200,
             letterSpacing: "1px",
-            zIndex: 1,
           }}
         >
           Estimated payout
         </div>
 
-        {/* Payout amount — Inter Regular, 200px (scales down for long numbers) */}
+        {/* Payout amount — Figma: centered, Inter Medium 250px */}
         <div
           style={{
+            position: "absolute",
+            top: "282px",
+            left: "0",
+            right: "0",
             display: "flex",
+            justifyContent: "center",
             fontSize: `${payoutFontSize}px`,
             color: "#ffffff",
-            fontWeight: 400,
-            letterSpacing: "-3px",
+            fontWeight: 500,
+            letterSpacing: "-4px",
             lineHeight: 1,
-            zIndex: 1,
           }}
         >
           {payoutFormatted}
         </div>
 
-        {/* User info — bottom left */}
+        {/* Avatar — Figma: X:101 Y:726, 108x108, white border 2px, radius 20 */}
         <div
           style={{
             position: "absolute",
-            bottom: "52px",
-            left: "64px",
+            top: "726px",
+            left: "101px",
             display: "flex",
             alignItems: "center",
-            gap: "18px",
-            zIndex: 1,
+            gap: "20px",
           }}
         >
-          {/* Avatar or letter fallback */}
           {avatarIsValid ? (
-            <img
-              src={avatarUrl}
-              width="64"
-              height="64"
+            <div
               style={{
-                borderRadius: "14px",
-                objectFit: "cover",
+                display: "flex",
+                width: "112px",
+                height: "112px",
+                borderRadius: "20px",
+                border: "2px solid #ffffff",
+                overflow: "hidden",
               }}
-            />
+            >
+              <img
+                src={avatarUrl}
+                width="108"
+                height="108"
+                style={{
+                  borderRadius: "18px",
+                  objectFit: "cover",
+                }}
+              />
+            </div>
           ) : (
             <div
               style={{
-                width: "64px",
-                height: "64px",
-                borderRadius: "14px",
+                width: "108px",
+                height: "108px",
+                borderRadius: "20px",
+                border: "2px solid #ffffff",
                 background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: "28px",
+                fontSize: "44px",
                 color: "#ffffff",
-                fontWeight: 400,
+                fontWeight: 500,
               }}
             >
               {firstLetter}
             </div>
           )}
-          {/* @username — Inter Extra Light, 50px */}
+          {/* @username — Inter Extra Light 50px */}
           <div
             style={{
               display: "flex",
@@ -207,8 +227,8 @@ export async function generateCardImage(data: CardData): Promise<ImageResponse> 
       </div>
     ),
     {
-      width: 1200,
-      height: 675,
+      width: 1600,
+      height: 900,
       fonts: [
         {
           name: "Inter",
@@ -218,8 +238,8 @@ export async function generateCardImage(data: CardData): Promise<ImageResponse> 
         },
         {
           name: "Inter",
-          data: interRegular,
-          weight: 400 as const,
+          data: interMedium,
+          weight: 500 as const,
           style: "normal" as const,
         },
       ],
