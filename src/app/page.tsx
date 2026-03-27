@@ -129,10 +129,10 @@ export default function Home() {
           <div className="text-center text-zinc-600 text-sm mt-4">
             <p>Try a test URL:</p>
             <button
-              onClick={() => setTweetUrl("https://x.com/Starplatinum_/status/1234567890")}
+              onClick={() => setTweetUrl("https://x.com/Jackkk/status/2026715211370213878?s=20")}
               className="text-zinc-400 hover:text-white transition-colors underline underline-offset-4"
             >
-              https://x.com/Starplatinum_/status/1234567890
+              https://x.com/Jackkk/status/2026715211370213878?s=20
             </button>
           </div>
         )}
