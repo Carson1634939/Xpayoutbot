@@ -69,13 +69,19 @@ export async function generateCardImage(data: CardData): Promise<ImageResponse> 
   const interExtraLight = await interExtraLightRes.arrayBuffer();
   const interMedium = await interMediumRes.arrayBuffer();
 
-  // Check if avatar URL is reachable
-  let avatarIsValid = false;
+  // Fetch avatar image and convert to base64 data URL so Satori can render it
+  // (Twitter CDN blocks requests from serverless environments)
+  let avatarDataUrl: string | null = null;
   try {
-    const res = await fetch(avatarUrl, { method: "HEAD" });
-    avatarIsValid = res.ok;
+    const res = await fetch(avatarUrl);
+    if (res.ok) {
+      const contentType = res.headers.get("content-type") || "image/jpeg";
+      const buffer = await res.arrayBuffer();
+      const base64 = Buffer.from(buffer).toString("base64");
+      avatarDataUrl = `data:${contentType};base64,${base64}`;
+    }
   } catch {
-    avatarIsValid = false;
+    // fallback to letter initial
   }
 
   const bgImageUrl = `${baseUrl}/card-bg.png`;
@@ -172,7 +178,7 @@ export async function generateCardImage(data: CardData): Promise<ImageResponse> 
             gap: "20px",
           }}
         >
-          {avatarIsValid ? (
+          {avatarDataUrl ? (
             <div
               style={{
                 display: "flex",
@@ -184,7 +190,7 @@ export async function generateCardImage(data: CardData): Promise<ImageResponse> 
               }}
             >
               <img
-                src={avatarUrl}
+                src={avatarDataUrl}
                 width="108"
                 height="108"
                 style={{
