@@ -133,8 +133,6 @@ export async function generateCardImage(data: CardData): Promise<ImageResponse> 
         {/* Background image from Figma */}
         <img
           src={bgImageUrl}
-          width="1600"
-          height="900"
           style={{
             position: "absolute",
             top: 0,
@@ -220,9 +218,9 @@ export async function generateCardImage(data: CardData): Promise<ImageResponse> 
             >
               <img
                 src={avatarDataUrl}
-                width="108"
-                height="108"
                 style={{
+                  width: "108px",
+                  height: "108px",
                   borderRadius: "18px",
                   objectFit: "cover",
                 }}
