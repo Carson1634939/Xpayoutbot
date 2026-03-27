@@ -69,19 +69,48 @@ export async function generateCardImage(data: CardData): Promise<ImageResponse> 
   const interExtraLight = await interExtraLightRes.arrayBuffer();
   const interMedium = await interMediumRes.arrayBuffer();
 
-  // Fetch avatar image and convert to base64 data URL so Satori can render it
-  // (Twitter CDN blocks requests from serverless environments)
+  // Fetch avatar image and convert to base64 data URL so Satori can render it.
+  // Twitter CDN can be picky — try multiple URL variants and add headers.
   let avatarDataUrl: string | null = null;
-  try {
-    const res = await fetch(avatarUrl);
-    if (res.ok) {
-      const contentType = res.headers.get("content-type") || "image/jpeg";
-      const buffer = await res.arrayBuffer();
-      const base64 = Buffer.from(buffer).toString("base64");
-      avatarDataUrl = `data:${contentType};base64,${base64}`;
+  if (avatarUrl) {
+    // Build list of avatar URLs to try: original, _200x200, _normal
+    const urlsToTry = [avatarUrl];
+    if (avatarUrl.includes("_400x400")) {
+      urlsToTry.push(avatarUrl.replace("_400x400", "_200x200"));
+      urlsToTry.push(avatarUrl.replace("_400x400", "_normal"));
     }
-  } catch {
-    // fallback to letter initial
+    if (avatarUrl.includes("_normal")) {
+      urlsToTry.push(avatarUrl.replace("_normal", "_200x200"));
+    }
+
+    for (const url of urlsToTry) {
+      try {
+        const res = await fetch(url, {
+          headers: {
+            "User-Agent": "Mozilla/5.0 (compatible; XPayoutBot/1.0)",
+            "Accept": "image/*",
+          },
+          redirect: "follow",
+        });
+        if (res.ok) {
+          const contentType = res.headers.get("content-type") || "image/jpeg";
+          const buffer = await res.arrayBuffer();
+          if (buffer.byteLength > 0) {
+            const base64 = Buffer.from(buffer).toString("base64");
+            avatarDataUrl = `data:${contentType};base64,${base64}`;
+            console.log(`Avatar loaded from: ${url} (${buffer.byteLength} bytes)`);
+            break;
+          }
+        }
+        console.log(`Avatar fetch failed for ${url}: ${res.status}`);
+      } catch (err) {
+        console.log(`Avatar fetch error for ${url}:`, err);
+      }
+    }
+
+    if (!avatarDataUrl) {
+      console.log("All avatar URLs failed, using letter fallback");
+    }
   }
 
   const bgImageUrl = `${baseUrl}/card-bg.png`;

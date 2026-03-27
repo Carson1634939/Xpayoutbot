@@ -40,13 +40,24 @@ export async function fetchTweetData(tweetId: string): Promise<TweetData | null>
       const tweet = json.data;
       const user = json.includes?.users?.[0];
 
+      console.log("X API response:", JSON.stringify({ tweet, user }, null, 2));
+
       if (!tweet || !user) return null;
+
+      const rawAvatarUrl = user.profile_image_url ?? "";
+      // Try _400x400 first, but keep original as fallback
+      const avatarUrl = rawAvatarUrl
+        ? rawAvatarUrl.replace("_normal", "_400x400")
+        : "";
+
+      console.log("Avatar URL from API:", rawAvatarUrl);
+      console.log("Avatar URL (resized):", avatarUrl);
 
       return {
         id: tweet.id,
         username: user.username,
         displayName: user.name,
-        avatarUrl: user.profile_image_url?.replace("_normal", "_400x400") ?? "",
+        avatarUrl,
         impressions: tweet.public_metrics?.impression_count ?? 0,
         text: tweet.text ?? "",
       };

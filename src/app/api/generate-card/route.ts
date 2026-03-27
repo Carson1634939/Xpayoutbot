@@ -33,6 +33,13 @@ export async function POST(req: NextRequest) {
 
     const payout = calculatePayout(tweetData.impressions);
 
+    console.log("Tweet data for card:", {
+      username: tweetData.username,
+      avatarUrl: tweetData.avatarUrl,
+      impressions: tweetData.impressions,
+      payout,
+    });
+
     const imageResponse = await generateCardImage({
       username: tweetData.username,
       avatarUrl: tweetData.avatarUrl,
