@@ -33,19 +33,13 @@ export async function POST(req: NextRequest) {
 
     const payout = calculatePayout(tweetData.impressions);
 
-    const pngBuffer = await generateCardImage({
+    const imageResponse = await generateCardImage({
       username: tweetData.username,
       avatarUrl: tweetData.avatarUrl,
       payout,
     });
 
-    return new NextResponse(new Uint8Array(pngBuffer), {
-      status: 200,
-      headers: {
-        "Content-Type": "image/png",
-        "Cache-Control": "public, max-age=60",
-      },
-    });
+    return imageResponse;
   } catch (err) {
     console.error("Error generating card:", err);
     return NextResponse.json(
