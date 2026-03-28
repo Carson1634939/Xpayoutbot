@@ -51,7 +51,7 @@ function getBaseUrl(): string {
  */
 export async function generateCardImage(data: CardData): Promise<ImageResponse> {
   const { username, avatarUrl, payout } = data;
-  const payoutFormatted = `+$${formatPayout(payout)}`;
+  const payoutFormatted = `$${formatPayout(payout)}`;
   const payoutFontSize = getPayoutFontSize(payoutFormatted);
   const firstLetter = username.charAt(0).toUpperCase();
   const baseUrl = getBaseUrl();
@@ -157,20 +157,6 @@ export async function generateCardImage(data: CardData): Promise<ImageResponse> 
             alignItems: "center",
           }}
         >
-          {/* "Estimated payout" — Inter Extra Light 50px */}
-          <div
-            style={{
-              display: "flex",
-              fontSize: "50px",
-              color: "#ffffff",
-              fontWeight: 200,
-              letterSpacing: "1px",
-              marginBottom: "8px",
-            }}
-          >
-            Estimated payout
-          </div>
-
           {/* Payout amount — Inter Medium 250px */}
           <div
             style={{
