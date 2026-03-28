@@ -19,12 +19,11 @@ const token = {
 
 /**
  * Upload media (image) to Twitter and return the media_id_string.
- * Uses the v1.1 media upload endpoint (chunked for large files).
+ * Uses the v1.1 media upload endpoint.
  */
 export async function uploadMedia(imageBuffer: Buffer): Promise<string> {
   const base64 = imageBuffer.toString("base64");
 
-  // Use v1.1 media upload with base64
   const url = "https://upload.twitter.com/1.1/media/upload.json";
 
   const params = new URLSearchParams();

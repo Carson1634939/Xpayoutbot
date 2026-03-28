@@ -10,8 +10,6 @@ import {
 } from "@/lib/twitter-bot";
 
 // Store the last processed mention ID in memory.
-// On Vercel serverless this resets between cold starts, but since_id
-// prevents duplicate replies (Twitter ignores duplicate tweets).
 let lastMentionId: string | undefined;
 
 // Vercel Cron secret to prevent unauthorized calls
@@ -106,7 +104,7 @@ export async function GET(req: NextRequest) {
 
         // Reply to the mention with the card
         const replyId = await postTweet({
-          text: `Estimated earnings for this post 👇`,
+          text: `Estimated earnings for this post \uD83D\uDC47`,
           replyToTweetId: mention.id,
           mediaId,
         });
