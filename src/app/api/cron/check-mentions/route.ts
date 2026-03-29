@@ -15,6 +15,9 @@ let lastMentionId: string | undefined;
 // Vercel Cron secret to prevent unauthorized calls
 const CRON_SECRET = process.env.CRON_SECRET;
 
+// Bot username for constructing tweet URLs
+const BOT_USERNAME = process.env.BOT_USERNAME || "Checkmypayout";
+
 export async function GET(req: NextRequest) {
   // Verify cron secret if set
   if (CRON_SECRET) {
@@ -102,13 +105,21 @@ export async function GET(req: NextRequest) {
         const mediaId = await uploadMedia(imageBuffer);
         console.log(`Uploaded media: ${mediaId}`);
 
-        // Reply to the mention with the card
-        const replyId = await postTweet({
+        // Step 1: Reply to the PARENT tweet with the card image
+        const cardReplyId = await postTweet({
           text: `Estimated earnings for this post \uD83D\uDC47`,
-          replyToTweetId: mention.id,
+          replyToTweetId: parentTweetId,
           mediaId,
         });
-        console.log(`Posted reply: ${replyId}`);
+        console.log(`Posted card reply to parent: ${cardReplyId}`);
+
+        // Step 2: Reply to the MENTION with a link to the card reply
+        const cardUrl = `https://x.com/${BOT_USERNAME}/status/${cardReplyId}`;
+        await postTweet({
+          text: `Here\u2019s the estimated payout \uD83D\uDC49 ${cardUrl}`,
+          replyToTweetId: mention.id,
+        });
+        console.log(`Posted link reply to mention: ${mention.id}`);
 
         processed++;
       } catch (err) {
