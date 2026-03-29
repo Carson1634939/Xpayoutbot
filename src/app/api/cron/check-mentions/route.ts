@@ -57,9 +57,17 @@ export async function GET(req: NextRequest) {
 
     let processed = 0;
     let errors = 0;
+    let skipped = 0;
 
     for (const mention of mentions) {
       try {
+        // Skip mentions from the bot itself (prevent reply loops)
+        if (mention.author_id === botUserId) {
+          console.log(`Mention ${mention.id} is from the bot itself, skipping`);
+          skipped++;
+          continue;
+        }
+
         // Find the parent tweet this mention is replying to
         const parentTweet = mention.referenced_tweets?.find(
           (ref) => ref.type === "replied_to"
@@ -69,31 +77,41 @@ export async function GET(req: NextRequest) {
           console.log(
             `Mention ${mention.id} is not a reply to a tweet, skipping`
           );
+          skipped++;
           continue;
         }
 
         const parentTweetId = parentTweet.id;
-        console.log(
-          `Processing mention ${mention.id} -> parent tweet ${parentTweetId}`
-        );
 
-        // Fetch parent tweet data (impressions, author info)
-        const tweetData = await fetchTweetData(parentTweetId);
-        if (!tweetData) {
+        // Fetch parent tweet to check if it's from the bot (prevent reply loops)
+        const parentData = await fetchTweetData(parentTweetId);
+        if (!parentData) {
           console.log(`Could not fetch data for tweet ${parentTweetId}`);
           continue;
         }
 
-        // Calculate payout
-        const payout = calculatePayout(tweetData.impressions);
+        // Skip if the parent tweet is from the bot itself
+        // (someone replying to the bot's card reply)
+        if (parentData.username.toLowerCase() === BOT_USERNAME.toLowerCase()) {
+          console.log(`Mention ${mention.id} is a reply to the bot's own tweet, skipping`);
+          skipped++;
+          continue;
+        }
+
         console.log(
-          `@${tweetData.username}: ${tweetData.impressions} impressions = $${payout.toFixed(2)}`
+          `Processing mention ${mention.id} -> parent tweet ${parentTweetId}`
+        );
+
+        // Calculate payout
+        const payout = calculatePayout(parentData.impressions);
+        console.log(
+          `@${parentData.username}: ${parentData.impressions} impressions = $${payout.toFixed(2)}`
         );
 
         // Generate card image
         const imageResponse = await generateCardImage({
-          username: tweetData.username,
-          avatarUrl: tweetData.avatarUrl,
+          username: parentData.username,
+          avatarUrl: parentData.avatarUrl,
           payout,
         });
 
@@ -131,6 +149,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       processed,
       errors,
+      skipped,
       total: mentions.length,
     });
   } catch (err) {
