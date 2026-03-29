@@ -38,17 +38,6 @@ function getBaseUrl(): string {
   return "http://localhost:3000";
 }
 
-/**
- * Generate the social card as a PNG Response.
- *
- * Figma specs (1600x900 canvas):
- *   "Estimated payout": X:600, Y:249, Inter Extra Light 50px, #999
- *   Payout amount: centered X+Y, Inter Medium 250px, #fff
- *   Avatar: X:101, Y:726, 108x108, white border 2px, radius 20
- *   @username: next to avatar, Inter Extra Light 50px, #fff
- *   X logo: top-right
- *   Background: card-bg.png
- */
 export async function generateCardImage(data: CardData): Promise<ImageResponse> {
   const { username, avatarUrl, payout } = data;
   const payoutFormatted = `$${formatPayout(payout)}`;
@@ -70,10 +59,8 @@ export async function generateCardImage(data: CardData): Promise<ImageResponse> 
   const interMedium = await interMediumRes.arrayBuffer();
 
   // Fetch avatar image and convert to base64 data URL so Satori can render it.
-  // Twitter CDN can be picky — try multiple URL variants and add headers.
   let avatarDataUrl: string | null = null;
   if (avatarUrl) {
-    // Build list of avatar URLs to try: original, _200x200, _normal
     const urlsToTry = [avatarUrl];
     if (avatarUrl.includes("_400x400")) {
       urlsToTry.push(avatarUrl.replace("_400x400", "_200x200"));
@@ -143,7 +130,7 @@ export async function generateCardImage(data: CardData): Promise<ImageResponse> 
           }}
         />
 
-        {/* Centered text group — "Estimated payout" + dollar amount */}
+        {/* Centered text group */}
         <div
           style={{
             position: "absolute",
@@ -162,7 +149,7 @@ export async function generateCardImage(data: CardData): Promise<ImageResponse> 
             style={{
               display: "flex",
               fontSize: `${payoutFontSize}px`,
-              color: "#ffffff",
+              color: "#E0E0E0",
               fontWeight: 500,
               letterSpacing: "-4px",
               lineHeight: 1,
@@ -190,7 +177,7 @@ export async function generateCardImage(data: CardData): Promise<ImageResponse> 
                 width: "112px",
                 height: "112px",
                 borderRadius: "20px",
-                border: "2px solid #ffffff",
+                border: "2px solid #E0E0E0",
                 overflow: "hidden",
               }}
             >
@@ -210,13 +197,13 @@ export async function generateCardImage(data: CardData): Promise<ImageResponse> 
                 width: "108px",
                 height: "108px",
                 borderRadius: "20px",
-                border: "2px solid #ffffff",
+                border: "2px solid #E0E0E0",
                 background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 fontSize: "44px",
-                color: "#ffffff",
+                color: "#E0E0E0",
                 fontWeight: 500,
               }}
             >
@@ -228,7 +215,7 @@ export async function generateCardImage(data: CardData): Promise<ImageResponse> 
             style={{
               display: "flex",
               fontSize: "50px",
-              color: "#ffffff",
+              color: "#E0E0E0",
               fontWeight: 200,
             }}
           >
