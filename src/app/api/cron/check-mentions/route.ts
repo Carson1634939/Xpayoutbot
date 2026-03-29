@@ -91,7 +91,6 @@ export async function GET(req: NextRequest) {
         }
 
         // Skip if the parent tweet is from the bot itself
-        // (someone replying to the bot's card reply)
         if (parentData.username.toLowerCase() === BOT_USERNAME.toLowerCase()) {
           console.log(`Mention ${mention.id} is a reply to the bot's own tweet, skipping`);
           skipped++;
@@ -123,21 +122,13 @@ export async function GET(req: NextRequest) {
         const mediaId = await uploadMedia(imageBuffer);
         console.log(`Uploaded media: ${mediaId}`);
 
-        // Step 1: Reply to the PARENT tweet with the card image
+        // Reply to the MENTION (the tag comment) with the card image
         const cardReplyId = await postTweet({
           text: `Estimated earnings for this post \uD83D\uDC47`,
-          replyToTweetId: parentTweetId,
+          replyToTweetId: mention.id,
           mediaId,
         });
-        console.log(`Posted card reply to parent: ${cardReplyId}`);
-
-        // Step 2: Reply to the MENTION with a link to the card reply
-        const cardUrl = `https://x.com/${BOT_USERNAME}/status/${cardReplyId}`;
-        await postTweet({
-          text: `Here\u2019s the estimated payout \uD83D\uDC49 ${cardUrl}`,
-          replyToTweetId: mention.id,
-        });
-        console.log(`Posted link reply to mention: ${mention.id}`);
+        console.log(`Posted card reply: ${cardReplyId}`);
 
         processed++;
       } catch (err) {
