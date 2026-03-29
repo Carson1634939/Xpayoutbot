@@ -17,6 +17,8 @@ const token = {
   secret: process.env.TWITTER_ACCESS_TOKEN_SECRET!,
 };
 
+const TWITTER_BEARER_TOKEN = process.env.TWITTER_BEARER_TOKEN;
+
 /**
  * Upload media (image) to Twitter and return the media_id_string.
  * Uses the v1.1 media upload endpoint.
@@ -162,4 +164,46 @@ export async function getMentions(
 
   const json = await res.json();
   return json.data ?? [];
+}
+
+/**
+ * Check if the bot has already replied to a specific tweet.
+ * Uses the search/recent endpoint to find bot replies referencing the tweet.
+ */
+export async function hasAlreadyReplied(
+  botUserId: string,
+  mentionId: string
+): Promise<boolean> {
+  // Search for tweets from the bot that are replies to this mention
+  const url = `https://api.x.com/2/users/${botUserId}/tweets?tweet.fields=referenced_tweets&max_results=20`;
+
+  const requestData = { url, method: "GET" as const };
+  const authHeader = oauth.toHeader(oauth.authorize(requestData, token));
+
+  const res = await fetch(url, {
+    headers: {
+      Authorization: authHeader.Authorization,
+    },
+  });
+
+  if (!res.ok) {
+    // If we can't check, err on the side of not replying
+    console.log(`Could not check existing replies: ${res.status}`);
+    return true;
+  }
+
+  const json = await res.json();
+  const tweets = json.data ?? [];
+
+  // Check if any of the bot's recent tweets are replies to this mention
+  for (const tweet of tweets) {
+    const repliedTo = tweet.referenced_tweets?.find(
+      (ref: { type: string; id: string }) => ref.type === "replied_to"
+    );
+    if (repliedTo && repliedTo.id === mentionId) {
+      return true;
+    }
+  }
+
+  return false;
 }

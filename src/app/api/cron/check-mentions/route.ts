@@ -7,6 +7,7 @@ import {
   getMentions,
   uploadMedia,
   postTweet,
+  hasAlreadyReplied,
 } from "@/lib/twitter-bot";
 
 // Store the last processed mention ID in memory.
@@ -93,6 +94,14 @@ export async function GET(req: NextRequest) {
         // Skip if the parent tweet is from the bot itself
         if (parentData.username.toLowerCase() === BOT_USERNAME.toLowerCase()) {
           console.log(`Mention ${mention.id} is a reply to the bot's own tweet, skipping`);
+          skipped++;
+          continue;
+        }
+
+        // Check if the bot already replied to this mention (prevent duplicates)
+        const alreadyReplied = await hasAlreadyReplied(botUserId, mention.id);
+        if (alreadyReplied) {
+          console.log(`Already replied to mention ${mention.id}, skipping`);
           skipped++;
           continue;
         }
