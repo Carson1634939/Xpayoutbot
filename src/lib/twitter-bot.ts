@@ -26,12 +26,19 @@ export async function uploadMedia(imageBuffer: Buffer): Promise<string> {
 
   const url = "https://upload.twitter.com/1.1/media/upload.json";
 
+  const requestData = {
+    url,
+    method: "POST" as const,
+    data: {
+      media_data: base64,
+      media_category: "tweet_image",
+    },
+  };
+  const authHeader = oauth.toHeader(oauth.authorize(requestData, token));
+
   const params = new URLSearchParams();
   params.append("media_data", base64);
   params.append("media_category", "tweet_image");
-
-  const requestData = { url, method: "POST" as const };
-  const authHeader = oauth.toHeader(oauth.authorize(requestData, token));
 
   const res = await fetch(url, {
     method: "POST",
